@@ -1,6 +1,8 @@
 package db
 
 import (
+	"golang-api/pkg/config"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -14,5 +16,6 @@ func Connect() (*gorm.DB, error) {
 	}
 
 	db.AutoMigrate(&Teacher{}, &Student{})
+
 	return db, nil
 }
