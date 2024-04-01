@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS students (
     is_suspended BOOLEAN NOT NULL DEFAULT false
 );
 
--- Create Register Table
-CREATE TABLE IF NOT EXISTS register (
+-- Create TeacherStudents Junction Table
+CREATE TABLE IF NOT EXISTS teacher_students (
     teacher_id INT NOT NULL,
     student_id INT NOT NULL,
    	PRIMARY KEY (teacher_id, student_id),
