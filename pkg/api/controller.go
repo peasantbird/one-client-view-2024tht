@@ -87,3 +87,28 @@ func (h *Handler) CommonStudents(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
+
+func (h *Handler) Suspend(w http.ResponseWriter, r *http.Request) {
+	// Decode the JSON body into a map
+	var req map[string]string
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Lookup the student by email
+	var student db.Student
+	if err := h.DB.Where(db.Student{Email: req["student"]}).First(&student).Error; err != nil {
+		http.Error(w, "Student not found", http.StatusNotFound)
+		return
+	}
+
+	// Update the student's suspended status
+	if err := h.DB.Model(&student).Update("IsSuspended", true).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with HTTP 204 No Content on success
+	w.WriteHeader(http.StatusNoContent)
+}
