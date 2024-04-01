@@ -47,3 +47,43 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	// Respond with HTTP 204 No Content on success
 	w.WriteHeader(http.StatusNoContent)
 }
+
+type CommonStudentsResponse struct {
+	Students []string `json:"students"`
+}
+
+func (h *Handler) CommonStudents(w http.ResponseWriter, r *http.Request) {
+	// Extract query parameters
+	teacherEmails := r.URL.Query()["teacher"]
+	if len(teacherEmails) == 0 {
+		http.Error(w, "No teacher query parameter provided", http.StatusBadRequest)
+		return
+	}
+
+	// Find common students for the given teachers
+	var students []db.Student
+	h.DB.Model(&db.Student{}).Joins("JOIN teacher_students on teacher_students.student_id = students.id").
+		Joins("JOIN teachers on teachers.id = teacher_students.teacher_id").
+		Where("teachers.email IN ?", teacherEmails).
+		Group("students.id").
+		Having("COUNT(DISTINCT teachers.id) = ?", len(teacherEmails)).
+		Find(&students)
+
+	// Prepare the list of student emails
+	studentEmails := make([]string, 0, len(students))
+	for _, student := range students {
+		studentEmails = append(studentEmails, student.Email)
+	}
+
+	// Create the response object
+	response := CommonStudentsResponse{
+		Students: studentEmails,
+	}
+
+	// Write the response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
