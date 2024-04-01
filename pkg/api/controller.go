@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"golang-api/pkg/db"
 	"net/http"
+	"regexp"
 )
 
 // RegisterRequest defines the expected format of the request body
@@ -111,4 +112,65 @@ func (h *Handler) Suspend(w http.ResponseWriter, r *http.Request) {
 
 	// Respond with HTTP 204 No Content on success
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// NotificationRequest defines the expected format of the request body
+type NotificationRequest struct {
+	Teacher      string `json:"teacher"`
+	Notification string `json:"notification"`
+}
+
+// NotificationResponse defines the format of the response body
+type NotificationResponse struct {
+	Recipients []string `json:"recipients"`
+}
+
+func (h *Handler) RetrieveForNotifications(w http.ResponseWriter, r *http.Request) {
+	// Decode the JSON body into the NotificationRequest struct
+	var req NotificationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Extract mentioned students from the notification text
+	mentioned := extractMentionedStudents(req.Notification)
+
+	// Get the list of students who are not suspended and are either registered to the teacher or mentioned in the notification
+	var students []db.Student
+	h.DB.Model(&db.Student{}).
+		Select("students.email").
+		Joins("LEFT JOIN teacher_students ON teacher_students.student_id = students.id").
+		Joins("LEFT JOIN teachers ON teachers.id = teacher_students.teacher_id").
+		Where("students.is_suspended = ?", false).
+		Where("teachers.email = ?", req.Teacher).
+		Group("students.email").
+		Find(&students)
+
+	// Prepare the list of student emails
+	studentEmails := make([]string, len(students))
+	for i, student := range students {
+		studentEmails[i] = student.Email
+	}
+
+	// Combine the mentioned students with the registered students
+	studentEmails = append(studentEmails, mentioned...)
+
+	// Create the response object
+	response := NotificationResponse{
+		Recipients: studentEmails,
+	}
+
+	// Write the response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// extractMentionedStudents finds all mentioned emails in the notification text
+func extractMentionedStudents(notification string) []string {
+	emailRegex := regexp.MustCompile(`\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b`)
+	return emailRegex.FindAllString(notification, -1)
 }
