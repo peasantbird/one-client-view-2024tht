@@ -9,7 +9,10 @@ import (
 )
 
 func main() {
-	db, err := db.Connect()
+	config := config.NewConfig()
+	config.Load()
+
+	db, err := db.Connect(config)
 	if err != nil {
 		panic(err)
 	}
@@ -20,5 +23,5 @@ func main() {
 	http.Handle("/", router)
 
 	// Start the HTTP server
-	log.Fatal(http.ListenAndServe(":"+config.GetPort(), router))
+	log.Fatal(http.ListenAndServe(":"+config.Port, router))
 }

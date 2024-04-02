@@ -7,13 +7,28 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Load the .env file and return DSN
-func GetDSN() string {
+type Config struct {
+	Port string
+	DB   struct {
+		DSN string
+	}
+}
+
+func NewConfig() *Config {
+	return &Config{}
+}
+
+func (c *Config) Load() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
+	c.Port = os.Getenv("PORT")
+	c.DB.DSN = GetDSN()
+}
+
+func GetDSN() string {
 	return "host=" + os.Getenv("DB_HOST") +
 		" user=" + os.Getenv("DB_USER") +
 		" dbname=" + os.Getenv("DB_NAME") +
@@ -21,14 +36,4 @@ func GetDSN() string {
 		" port=" + os.Getenv("DB_PORT") +
 		" sslmode=" + os.Getenv("DB_SSLMODE") +
 		" TimeZone=" + os.Getenv("DB_TIMEZONE")
-}
-
-// Get the port from the .env file
-func GetPort() string {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	return os.Getenv("PORT")
 }
