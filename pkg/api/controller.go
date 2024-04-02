@@ -143,7 +143,7 @@ func (h *Handler) RetrieveForNotifications(w http.ResponseWriter, r *http.Reques
 		Joins("LEFT JOIN teacher_students ON teacher_students.student_id = students.id").
 		Joins("LEFT JOIN teachers ON teachers.id = teacher_students.teacher_id").
 		Where("students.is_suspended = ?", false).
-		Where("teachers.email = ?", req.Teacher).
+		Where("teachers.email = ? OR students.email IN ?", req.Teacher, mentioned).
 		Group("students.email").
 		Find(&students)
 
@@ -152,9 +152,6 @@ func (h *Handler) RetrieveForNotifications(w http.ResponseWriter, r *http.Reques
 	for i, student := range students {
 		studentEmails[i] = student.Email
 	}
-
-	// Combine the mentioned students with the registered students
-	studentEmails = append(studentEmails, mentioned...)
 
 	// Create the response object
 	response := NotificationResponse{
