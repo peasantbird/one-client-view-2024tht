@@ -1,9 +1,9 @@
 package main
 
 import (
-	"golang-api/pkg/api"
-	"golang-api/pkg/config"
-	"golang-api/pkg/db"
+	"golang-api/internal/api"
+	"golang-api/internal/config"
+	"golang-api/internal/db"
 	"log"
 	"net/http"
 )

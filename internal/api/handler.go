@@ -2,12 +2,17 @@ package api
 
 import (
 	"encoding/json"
-	"golang-api/pkg/db"
+	"golang-api/internal/db"
 	"net/http"
 	"regexp"
+
+	"gorm.io/gorm"
 )
 
-// RegisterRequest defines the expected format of the request body
+type Handler struct {
+	DB *gorm.DB
+}
+
 type RegisterRequest struct {
 	Teacher  string   `json:"teacher"`
 	Students []string `json:"students"`
@@ -38,7 +43,6 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Associate the student with the teacher
-		// It will automatically handle the many-to-many relationship
 		if err := h.DB.Model(&teacher).Association("Students").Append(&student); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -114,13 +118,11 @@ func (h *Handler) Suspend(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// NotificationRequest defines the expected format of the request body
 type NotificationRequest struct {
 	Teacher      string `json:"teacher"`
 	Notification string `json:"notification"`
 }
 
-// NotificationResponse defines the format of the response body
 type NotificationResponse struct {
 	Recipients []string `json:"recipients"`
 }

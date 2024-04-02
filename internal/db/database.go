@@ -1,7 +1,7 @@
 package db
 
 import (
-	"golang-api/pkg/config"
+	"golang-api/internal/config"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

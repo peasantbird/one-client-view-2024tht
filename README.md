@@ -6,7 +6,7 @@
 
 1. Create a PostgreSQL database for this API server. Then, start the database and run `schema.sql` to create the necessary tables for the server.
 2. Create a `.env` file in the root directory of this project, with the same fields as those in `.env.example`. Include the information used to set up your PostgreSQL database for fields starting with `DB_`.
-3. `cd` into this project's root directory and run `go run main.go` in the terminal to start this project.
+3. `cd` into this project's root directory and run `go run ./cmd/main.go` in the terminal to start this project.
 
 ### Testing
 
