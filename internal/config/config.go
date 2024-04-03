@@ -25,10 +25,10 @@ func (c *Config) Load() {
 	}
 
 	c.Port = os.Getenv("PORT")
-	c.DB.DSN = GetDSN()
+	c.DB.DSN = getDSN()
 }
 
-func GetDSN() string {
+func getDSN() string {
 	return "host=" + os.Getenv("DB_HOST") +
 		" user=" + os.Getenv("DB_USER") +
 		" dbname=" + os.Getenv("DB_NAME") +
