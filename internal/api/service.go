@@ -5,6 +5,7 @@ import "golang-api/internal/db"
 type Service interface {
 	Register(teacherEmail string, studentEmails []string) error
 	CommonStudents(teacherEmails []string) ([]string, error)
+	Suspend(studentEmail string) error
 }
 
 type ServiceImpl struct {
@@ -64,4 +65,22 @@ func (s *ServiceImpl) CommonStudents(teacherEmails []string) ([]string, error) {
 	}
 
 	return studentEmails, nil
+}
+
+func (s *ServiceImpl) Suspend(studentEmail string) error {
+	// Lookup the student by email
+	student, err := s.repo.FindStudentByEmail(studentEmail)
+	if err != nil {
+		return err
+	}
+
+	// Suspend the student
+	student.IsSuspended = true
+
+	// Update the student
+	if err := s.repo.UpdateStudent(student); err != nil {
+		return err
+	}
+
+	return nil
 }

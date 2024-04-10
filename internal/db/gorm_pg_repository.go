@@ -25,6 +25,15 @@ func (r *GormPostgresRepository) FindTeacherByEmail(email string) (Teacher, erro
 	return teacher, nil
 }
 
+func (r *GormPostgresRepository) FindStudentByEmail(email string) (Student, error) {
+	var student Student
+	if err := r.db.Where(Student{Email: email}).First(&student).Error; err != nil {
+		return Student{}, err
+	}
+
+	return student, nil
+}
+
 func (r *GormPostgresRepository) FindOrCreateTeacherByEmail(email string) (Teacher, error) {
 	var teacher Teacher
 	if err := r.db.Where(Teacher{Email: email}).FirstOrCreate(&teacher).Error; err != nil {
@@ -41,6 +50,14 @@ func (r *GormPostgresRepository) FindOrCreateStudentByEmail(email string) (Stude
 	}
 
 	return student, nil
+}
+
+func (r *GormPostgresRepository) UpdateStudent(student Student) error {
+	if err := r.db.Save(&student).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *GormPostgresRepository) AssociateTeacherWithStudents(teacher Teacher, students []Student) error {

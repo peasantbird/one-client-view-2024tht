@@ -65,30 +65,25 @@ func (h *Handler) CommonStudents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func (h *Handler) Suspend(w http.ResponseWriter, r *http.Request) {
-// 	// Decode the JSON body into a map
-// 	var req map[string]string
-// 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-// 		http.Error(w, "Invalid request body", http.StatusBadRequest)
-// 		return
-// 	}
+func (h *Handler) Suspend(w http.ResponseWriter, r *http.Request) {
+	// Decode the JSON body into the request struct
+	var req struct {
+		Student string `json:"student"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
 
-// 	// Lookup the student by email
-// 	var student db.Student
-// 	if err := h.DB.Where(db.Student{Email: req["student"]}).First(&student).Error; err != nil {
-// 		http.Error(w, "Student not found", http.StatusNotFound)
-// 		return
-// 	}
+	// Call the service method to suspend a student
+	if err := h.service.Suspend(req.Student); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-// 	// Update the student's suspended status
-// 	if err := h.DB.Model(&student).Update("IsSuspended", true).Error; err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	// Respond with HTTP 204 No Content on success
-// 	w.WriteHeader(http.StatusNoContent)
-// }
+	// Respond with HTTP 204 No Content on success
+	w.WriteHeader(http.StatusNoContent)
+}
 
 // type NotificationRequest struct {
 // 	Teacher      string `json:"teacher"`
