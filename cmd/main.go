@@ -12,12 +12,14 @@ func main() {
 	config := config.NewConfig()
 	config.Load()
 
-	db, err := db.Connect(config)
+	database, err := db.Connect(config)
 	if err != nil {
 		panic(err)
 	}
-
-	router := api.Router(&api.Handler{DB: db})
+	repo := db.NewGormPostgresRepository(database)
+	service := api.NewService(repo)
+	handler := api.NewHandler(service)
+	router := api.Router(handler)
 
 	// Use the router as the default HTTP handler
 	http.Handle("/", router)
