@@ -1,11 +1,15 @@
 package api
 
-import "golang-api/internal/db"
+import (
+	"golang-api/internal/db"
+	"regexp"
+)
 
 type Service interface {
 	Register(teacherEmail string, studentEmails []string) error
 	CommonStudents(teacherEmails []string) ([]string, error)
 	Suspend(studentEmail string) error
+	RetrieveForNotifications(teacherEmail string, notification string) ([]string, error)
 }
 
 type ServiceImpl struct {
@@ -83,4 +87,65 @@ func (s *ServiceImpl) Suspend(studentEmail string) error {
 	}
 
 	return nil
+}
+
+func (s *ServiceImpl) RetrieveForNotifications(teacherEmail string, notification string) ([]string, error) {
+	// Extract mentioned student emails from the notification
+	mentionedStudentEmails := extractMentionedStudents(notification)
+
+	// Find or create mentioned students
+	mentionedStudents := make([]db.Student, 0, len(mentionedStudentEmails))
+	for _, studentEmail := range mentionedStudentEmails {
+		student, err := s.repo.FindOrCreateStudentByEmail(studentEmail)
+		if err != nil {
+			return nil, err
+		}
+		mentionedStudents = append(mentionedStudents, student)
+	}
+
+	// Lookup the teacher by email, or create a new one if it doesn't exist
+	teacher, err := s.repo.FindOrCreateTeacherByEmail(teacherEmail)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find students who are registered to this teacher
+	teachers := []db.Teacher{teacher}
+	registeredStudents, err := s.repo.FindCommonStudentsForTeachers(teachers)
+
+	// Combine the mentioned students and registered students, removing duplicates
+	students := make(map[string]db.Student)
+	for _, student := range mentionedStudents {
+		students[student.Email] = student
+	}
+	for _, student := range registeredStudents {
+		students[student.Email] = student
+	}
+
+	// Remove suspended students
+	for studentEmail, student := range students {
+		if student.IsSuspended {
+			delete(students, studentEmail)
+		}
+	}
+
+	// Extract the student emails
+	studentEmails := make([]string, 0, len(students))
+	for studentEmail, _ := range students {
+		studentEmails = append(studentEmails, studentEmail)
+	}
+
+	return studentEmails, nil
+}
+
+// extractMentionedStudents finds all mentioned emails in the notification text
+func extractMentionedStudents(notification string) []string {
+	emailRegex := regexp.MustCompile(`@\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b`)
+	matches := emailRegex.FindAllString(notification, -1)
+
+	for i, match := range matches {
+		matches[i] = match[1:] // Remove the leading '@'
+	}
+
+	return matches
 }
