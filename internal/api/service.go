@@ -112,6 +112,9 @@ func (s *ServiceImpl) RetrieveForNotifications(teacherEmail string, notification
 	// Find students who are registered to this teacher
 	teachers := []db.Teacher{teacher}
 	registeredStudents, err := s.repo.FindCommonStudentsForTeachers(teachers)
+	if err != nil {
+		return nil, err
+	}
 
 	// Combine the mentioned students and registered students, removing duplicates
 	students := make(map[string]db.Student)
@@ -131,7 +134,7 @@ func (s *ServiceImpl) RetrieveForNotifications(teacherEmail string, notification
 
 	// Extract the student emails
 	studentEmails := make([]string, 0, len(students))
-	for studentEmail, _ := range students {
+	for studentEmail := range students {
 		studentEmails = append(studentEmails, studentEmail)
 	}
 
