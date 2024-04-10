@@ -3,7 +3,8 @@ package api
 import "golang-api/internal/db"
 
 type Service interface {
-	Register(teacher string, students []string) error
+	Register(teacherEmail string, studentEmails []string) error
+	CommonStudents(teacherEmails []string) ([]string, error)
 }
 
 type ServiceImpl struct {
@@ -16,7 +17,7 @@ func NewService(repo db.Repository) Service {
 
 func (s *ServiceImpl) Register(teacherEmail string, studentEmails []string) error {
 	// Lookup the teacher by email, or create a new one if it doesn't exist
-	teacher, err := s.repo.FindOrCreateTeacher(teacherEmail)
+	teacher, err := s.repo.FindOrCreateTeacherByEmail(teacherEmail)
 	if err != nil {
 		return err
 	}
@@ -24,7 +25,7 @@ func (s *ServiceImpl) Register(teacherEmail string, studentEmails []string) erro
 	// Lookup the students by email, or create new ones if they don't exist
 	students := make([]db.Student, 0, len(studentEmails))
 	for _, studentEmail := range studentEmails {
-		student, err := s.repo.FindOrCreateStudent(studentEmail)
+		student, err := s.repo.FindOrCreateStudentByEmail(studentEmail)
 		if err != nil {
 			return err
 		}
@@ -37,4 +38,30 @@ func (s *ServiceImpl) Register(teacherEmail string, studentEmails []string) erro
 	}
 
 	return nil
+}
+
+func (s *ServiceImpl) CommonStudents(teacherEmails []string) ([]string, error) {
+	// Lookup the teachers by email
+	teachers := make([]db.Teacher, 0, len(teacherEmails))
+	for _, teacherEmail := range teacherEmails {
+		teacher, err := s.repo.FindTeacherByEmail(teacherEmail)
+		if err != nil {
+			return nil, err
+		}
+		teachers = append(teachers, teacher)
+	}
+
+	// Find the common students for the teachers
+	students, err := s.repo.FindCommonStudentsForTeachers(teachers)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract the student emails
+	studentEmails := make([]string, 0, len(students))
+	for _, student := range students {
+		studentEmails = append(studentEmails, student.Email)
+	}
+
+	return studentEmails, nil
 }
