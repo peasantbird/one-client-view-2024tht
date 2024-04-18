@@ -1,4 +1,4 @@
-package config_test
+package config
 
 import (
 	"os"
@@ -6,12 +6,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"golang-api/internal/config"
 )
 
 func TestNewConfig(t *testing.T) {
-	c := config.NewConfig()
+	c := NewConfig()
 
 	assert.NotNil(t, c)
 }
@@ -33,7 +31,7 @@ func TestLoad(t *testing.T) {
 	`), 0644)
 	require.NoError(t, err)
 
-	c := config.NewConfig()
+	c := NewConfig()
 	c.Load()
 
 	assert.Equal(t, "8080", c.Port)
